@@ -1,3 +1,4 @@
+use std::io::{Error, ErrorKind};
 use chrono::{NaiveDateTime, NaiveDate};
 use std::ops::Range;
 use std::fmt;
@@ -80,18 +81,27 @@ impl DiaryDoc {
     pub fn worklog_range(&self) -> Vec<Range<NaiveDateTime>> {
         self.metadata.worklog
             .iter()
-            .filter(|x| x.contains(","))
-            .map(|x| self.worklog_to_date_range(x))
+            .filter_map(|x| self.worklog_to_date_range(x).ok())
             .collect()
     }
 
-    pub fn worklog_to_date_range(&self, worklog: &str) -> Range<NaiveDateTime> {
+    pub fn worklog_to_date_range(
+        &self, worklog: &str
+    ) -> Result<Range<NaiveDateTime>, Box<dyn std::error::Error>> {
         let parts: Vec<&str> = worklog.split(",").map(|x| x.trim()).collect();
-        let fmt = "%Y-%m-%dT%H:%M:%S";
-        Range {
-            start: NaiveDateTime::parse_from_str(parts[0], fmt).unwrap(),
-            end: NaiveDateTime::parse_from_str(parts[1], fmt).unwrap()
+        if parts.len() < 2 {
+            return Err(
+                Box::new(
+                    Error::new(
+                        ErrorKind::InvalidInput, "Invalid input string"
+                    )
+                )
+            );
         }
+        let fmt = "%Y-%m-%dT%H:%M:%S";
+        let st = NaiveDateTime::parse_from_str(parts[0], fmt)?;
+        let end = NaiveDateTime::parse_from_str(parts[1], fmt)?;
+        Ok(Range { start: st, end: end })
     }
 }
 

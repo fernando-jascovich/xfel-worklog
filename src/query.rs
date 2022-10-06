@@ -43,7 +43,10 @@ fn filter_date(
     for doc in data.iter_mut() {
         let mut worklog: Vec<String> = doc.metadata.worklog.to_vec();
         worklog.retain_mut(|x| {
-            doc.worklog_to_date_range(x).start > st_ts
+            if let Some(range) = doc.worklog_to_date_range(x).ok() {
+                return range.start > st_ts;
+            }
+            false
         });
         doc.metadata.worklog = worklog;
     }
