@@ -55,15 +55,6 @@ pub enum Action {
     Fetch
 }
 
-fn worklog_to_date_range(worklog: &str) -> Range<NaiveDateTime> {
-    let parts: Vec<&str> = worklog.split(",").map(|x| x.trim()).collect();
-    let fmt = "%Y-%m-%dT%H:%M:%S";
-    Range {
-        start: NaiveDateTime::parse_from_str(parts[0], fmt).unwrap(),
-        end: NaiveDateTime::parse_from_str(parts[1], fmt).unwrap()
-    }
-}
-
 impl DiaryDoc {
     pub fn has_work_after(&self, datetime: &NaiveDateTime) -> bool {
         for range in self.worklog_range() {
@@ -87,8 +78,17 @@ impl DiaryDoc {
         self.metadata.worklog
             .iter()
             .filter(|x| x.contains(","))
-            .map(|x| worklog_to_date_range(x))
+            .map(|x| self.worklog_to_date_range(x))
             .collect()
+    }
+
+    pub fn worklog_to_date_range(&self, worklog: &str) -> Range<NaiveDateTime> {
+        let parts: Vec<&str> = worklog.split(",").map(|x| x.trim()).collect();
+        let fmt = "%Y-%m-%dT%H:%M:%S";
+        Range {
+            start: NaiveDateTime::parse_from_str(parts[0], fmt).unwrap(),
+            end: NaiveDateTime::parse_from_str(parts[1], fmt).unwrap()
+        }
     }
 }
 

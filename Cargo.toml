@@ -13,3 +13,4 @@ chrono = "0.4.22"
 clap = { version = "4.0.9", features = ["derive"] }
 simple_logger = "2.3.0"
 log = "0.4.17"
+tabled = "0.9.0"

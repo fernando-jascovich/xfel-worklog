@@ -40,6 +40,13 @@ fn filter_date(
         }
         true
     });
+    for doc in data.iter_mut() {
+        let mut worklog: Vec<String> = doc.metadata.worklog.to_vec();
+        worklog.retain_mut(|x| {
+            doc.worklog_to_date_range(x).start > st_ts
+        });
+        doc.metadata.worklog = worklog;
+    }
     data
 }
 
