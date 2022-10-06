@@ -1,6 +1,7 @@
 mod model;
 mod query;
 mod data;
+mod jira;
 
 use chrono::Duration;
 use clap::Parser;
@@ -55,6 +56,7 @@ fn print_results(results: Vec<DiaryDoc>) {
 
 fn main() {
     simple_logger::init_with_env().unwrap();
+    dotenv::dotenv().ok();
     let cli = Cli::parse();
 
     match &cli.command {
@@ -84,6 +86,10 @@ fn main() {
         Commands::Action { path, action } => {
             info!("action: {:?}, {:?}", path, action);
         }
-        Commands::Browse => browse()
+        Commands::Browse => browse(),
+        Commands::Fetch { key } => {
+            let ticket = jira::fetch(key).unwrap();
+            data::create_entry(ticket, Some("gfr"));
+        }
     }
 }

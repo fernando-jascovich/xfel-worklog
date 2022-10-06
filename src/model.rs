@@ -45,7 +45,10 @@ pub enum Commands {
         #[command(subcommand)]
         action: Action
     },
-    Browse
+    Browse,
+    Fetch {
+        key: String
+    }
 }
 
 #[derive(Subcommand, Debug)]

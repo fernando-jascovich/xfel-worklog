@@ -1,8 +1,11 @@
+use std::fs::File;
+use std::io::prelude::*;
 use walkdir::WalkDir;
 use yaml_front_matter::YamlFrontMatter;
 use std::fs;
 use log::warn;
 use super::model::DiaryDoc;
+use super::jira::JiraTicket;
 
 const ROOT_DIR: &str = "/home/xfel/diary";
 
@@ -29,5 +32,35 @@ pub fn load_diary() -> Vec<DiaryDoc> {
         }
     }
     output
+}
+
+pub fn create_entry(ticket: JiraTicket, base_path: Option<&str>) {
+    let key_parts: Vec<&str> = ticket.key.split("-").collect();
+    let dir = if let Some(base) = base_path {
+        format!("{}/{}", base, key_parts[0])
+    } else {
+        key_parts[0].to_string()
+    };
+    let mut file = File::create(
+        format!("{}/{}/{}.md", ROOT_DIR, dir, ticket.key)
+    ).unwrap();
+    let file_data = format!(r#"---
+author: '{}'
+date: ''
+tags: ['{}', '{}']
+estimate: 
+worklog:
+---
+# {}
+
+{}
+"#, 
+        ticket.fields.creator.display_name, 
+        key_parts[0], 
+        ticket.key, 
+        ticket.fields.summary, 
+        ticket.fields.description
+    );
+    file.write_all(file_data.as_bytes());
 }
 
