@@ -1,9 +1,8 @@
 use std::io::{Error, ErrorKind};
-use chrono::{NaiveDateTime, NaiveDate};
+use chrono::NaiveDateTime;
 use std::ops::Range;
 use std::fmt;
 use serde::{Deserialize};
-use clap::{Parser, Subcommand};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Metadata {
@@ -18,45 +17,6 @@ pub struct Metadata {
 pub struct DiaryDoc {
     pub metadata: Metadata,
     pub path: String
-}
-
-#[derive(Debug, Parser)]
-#[command(author, version, about, long_about = None)]
-pub struct Cli {
-    #[command(subcommand)]
-    pub command: Commands
-}
-
-#[derive(Subcommand, Debug)]
-pub enum Commands {
-    Query {
-        #[arg(short, long)]
-        tags: Option<Vec<String>>,
-
-        #[arg(short, long)]
-        path: Option<String>,
-
-        start_date: Option<NaiveDate>,
-        end_date: Option<NaiveDate>
-    },
-    Action {
-        #[arg(short, long)]
-        path: String,
-
-        #[command(subcommand)]
-        action: Action
-    },
-    Browse,
-    Fetch {
-        key: String
-    }
-}
-
-#[derive(Subcommand, Debug)]
-pub enum Action {
-    Start,
-    Stop,
-    Fetch
 }
 
 impl DiaryDoc {
