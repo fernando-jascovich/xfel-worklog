@@ -1,9 +1,17 @@
 use clap::{Parser, Subcommand};
 use chrono::NaiveDate;
+use chrono::offset::Utc;
 use super::query;
 use super::data;
 use super::jira;
 use super::model::DiaryDoc;
+
+fn default_start_date() -> &'static str {
+    let today = Utc::today().format("%Y-%m-%d");
+    Box::leak(
+        format!("{}", today).into_boxed_str()
+    )
+}
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about = None)]
@@ -25,6 +33,7 @@ pub enum Commands {
         path: Option<String>,
 
         /// In ISO format: '2020-01-01'
+        #[arg(default_value = default_start_date())]
         start_date: Option<NaiveDate>,
 
         /// In ISO format: '2020-01-01'
