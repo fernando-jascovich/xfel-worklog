@@ -4,14 +4,23 @@ use walkdir::WalkDir;
 use yaml_front_matter::YamlFrontMatter;
 use std::fs;
 use log::warn;
+use serde::{Serialize, Deserialize};
 use super::model::DiaryDoc;
 use super::jira::JiraTicket;
 
-const ROOT_DIR: &str = "/home/xfel/diary";
+#[derive(Serialize, Deserialize, Debug)]
+struct Config {
+    root: String
+}
+
+fn conf() -> Config {
+    envy::prefixed("DATA_").from_env().unwrap()
+}
+
 
 pub fn load_diary() -> Vec<DiaryDoc> {
     let mut output: Vec<DiaryDoc> = Vec::new();
-    let iter = WalkDir::new(ROOT_DIR) 
+    let iter = WalkDir::new(conf().root) 
         .into_iter()
         .filter_map(Result::ok)
         .filter(|e| !e.file_type().is_dir());
@@ -42,7 +51,7 @@ pub fn create_entry(ticket: JiraTicket, base_path: Option<&str>) {
         key_parts[0].to_string()
     };
     let mut file = File::create(
-        format!("{}/{}/{}.md", ROOT_DIR, dir, ticket.key)
+        format!("{}/{}/{}.md", conf().root, dir, ticket.key)
     ).unwrap();
     let file_data = format!(r#"---
 author: '{}'
