@@ -20,6 +20,19 @@ pub struct DiaryDoc {
 }
 
 impl DiaryDoc {
+    fn is_worklog_entry_complete(&self, entry: &Vec<&str>) -> bool {
+        entry.len() > 1 && !entry[1].is_empty()
+    }
+
+    pub fn is_active(&self) -> bool {
+        for x in &self.metadata.worklog {
+            if !self.is_worklog_entry_complete(&self.worklog_entry(&x)) {
+                return true;
+            }
+        }
+        false
+    }
+
     pub fn has_work_after(&self, datetime: &NaiveDateTime) -> bool {
         for range in self.worklog_range() {
             if &range.end > datetime {
@@ -45,11 +58,15 @@ impl DiaryDoc {
             .collect()
     }
 
+    fn worklog_entry<'a >(&self, worklog: &'a str) -> Vec<&'a str> {
+        worklog.split(",").map(|x| x.trim()).collect()
+    }
+
     pub fn worklog_to_date_range(
         &self, worklog: &str
     ) -> Result<Range<NaiveDateTime>, Box<dyn std::error::Error>> {
-        let parts: Vec<&str> = worklog.split(",").map(|x| x.trim()).collect();
-        if parts.len() < 2 {
+        let entry = self.worklog_entry(worklog);
+        if !self.is_worklog_entry_complete(&entry) {
             return Err(
                 Box::new(
                     Error::new(
@@ -59,8 +76,8 @@ impl DiaryDoc {
             );
         }
         let fmt = "%Y-%m-%dT%H:%M:%S";
-        let st = NaiveDateTime::parse_from_str(parts[0], fmt)?;
-        let end = NaiveDateTime::parse_from_str(parts[1], fmt)?;
+        let st = NaiveDateTime::parse_from_str(entry[0], fmt)?;
+        let end = NaiveDateTime::parse_from_str(entry[1], fmt)?;
         Ok(Range { start: st, end: end })
     }
 }

@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use super::model::DiaryDoc;
-use super::data::load_diary;
+use super::load_diary;
 
 pub fn all() -> Vec<DiaryDoc> {
     load_diary().clone()

@@ -1,3 +1,6 @@
+pub mod model;
+pub mod query;
+
 use std::fs::File;
 use std::io::prelude::*;
 use walkdir::WalkDir;
@@ -5,7 +8,7 @@ use yaml_front_matter::YamlFrontMatter;
 use std::fs;
 use log::warn;
 use serde::{Serialize, Deserialize};
-use super::model::DiaryDoc;
+use model::DiaryDoc;
 use super::jira::JiraTicket;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -43,6 +46,10 @@ pub fn load_diary() -> Vec<DiaryDoc> {
     output
 }
 
+//pub fn create_entry(doc: DiaryDoc, base_path: Option<&str>) {
+
+//}
+
 pub fn create_entry(ticket: JiraTicket, base_path: Option<&str>) {
     let key_parts: Vec<&str> = ticket.key.split("-").collect();
     let dir = if let Some(base) = base_path {
@@ -53,7 +60,8 @@ pub fn create_entry(ticket: JiraTicket, base_path: Option<&str>) {
     let mut file = File::create(
         format!("{}/{}/{}.md", conf().root, dir, ticket.key)
     ).unwrap();
-    let file_data = format!(r#"---
+    let file_data = format!(
+        r#"---
 author: '{}'
 date: ''
 tags: ['{}', '{}']
@@ -63,13 +71,13 @@ worklog:
 # {}
 
 {}
-"#, 
+"#,
         ticket.fields.creator.display_name, 
         key_parts[0], 
         ticket.key, 
         ticket.fields.summary, 
         ticket.fields.description
     );
-    file.write_all(file_data.as_bytes());
+    file.write_all(file_data.as_bytes()).unwrap();
 }
 

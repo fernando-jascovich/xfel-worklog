@@ -1335,6 +1335,7 @@ dependencies = [
 name = "xfel-worklog"
 version = "0.1.0"
 dependencies = [
+ "atty",
  "chrono",
  "clap",
  "dotenv",
