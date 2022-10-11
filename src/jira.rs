@@ -20,7 +20,7 @@ pub struct JiraTicket {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JiraTicketFields {
-    pub description: String,
+    pub description: Option<String>,
     pub summary: String,
     pub comment: JiraCommentHolder,
     pub creator: JiraAuthor

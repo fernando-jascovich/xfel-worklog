@@ -4,12 +4,12 @@ use std::io;
 use atty::Stream;
 use clap::{Parser, Subcommand};
 use chrono::NaiveDate;
-use chrono::offset::Utc;
+use chrono::offset::Local;
 use super::data;
 use super::jira;
 
 fn default_start_date() -> &'static str {
-    let today = Utc::today().format("%Y-%m-%d");
+    let today = Local::today().format("%Y-%m-%d");
     Box::leak(
         format!("{}", today).into_boxed_str()
     )
@@ -81,7 +81,10 @@ pub enum Commands {
         /// Optional path into DATA_ROOT
         #[arg(short, long)]
         path: Option<String>
-    }
+    },
+
+    /// Sync element's worklog with jira
+    SyncWorklog {}
 }
 
 #[derive(Subcommand, Debug)]
@@ -120,11 +123,10 @@ pub fn main() {
             let mut doc = results.first().unwrap().clone();
             let new_entry = format!(
                 "'{},'", 
-                Utc::now().format("%Y-%m-%dT%H:%M:%S")
+                Local::now().format("%Y-%m-%dT%H:%M:%S")
             );
             doc.metadata.worklog.push(new_entry);
-            println!("doc: {:?}, action: {:?}", doc, action);
-            println!("metadata: {:?}", doc.metadata.worklog);
+            data::update_entry(doc);
         }
         Commands::Browse { active } => {
             let mut docs: Vec<data::model::DiaryDoc> = data::query::all();
@@ -149,5 +151,6 @@ pub fn main() {
             data::create_entry(ticket, p);
             table::print(data::query::by_path(key));
         }
+        Commands::SyncWorklog { } => todo!()
     }
 }
