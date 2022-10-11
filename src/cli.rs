@@ -121,12 +121,17 @@ pub fn main() {
                 data::query::by_path(&default_path().unwrap())
             };
             let mut doc = results.first().unwrap().clone();
-            let new_entry = format!(
-                "'{},'", 
-                Local::now().format("%Y-%m-%dT%H:%M:%S")
-            );
-            doc.metadata.worklog.push(new_entry);
-            data::update_entry(doc);
+            match action {
+                Action::Start => {
+                    doc.start();
+                    data::update_entry(doc);
+                }
+                Action::Stop => {
+                    doc.stop();
+                    data::update_entry(doc);
+                }
+            };
+
         }
         Commands::Browse { active } => {
             let mut docs: Vec<data::model::DiaryDoc> = data::query::all();

@@ -1,10 +1,11 @@
+use chrono::Local;
 use std::io::{Error, ErrorKind};
 use chrono::NaiveDateTime;
 use std::ops::Range;
 use std::fmt;
-use serde::{Deserialize};
+use serde::{Serialize, Deserialize};
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Metadata {
     pub author: Option<String>,
     pub date: Option<String>,
@@ -79,6 +80,26 @@ impl DiaryDoc {
         let st = NaiveDateTime::parse_from_str(entry[0], fmt)?;
         let end = NaiveDateTime::parse_from_str(entry[1], fmt)?;
         Ok(Range { start: st, end: end })
+    }
+
+    pub fn start(&mut self) {
+        // TODO: check for already started worklog
+        let new_entry = format!(
+            "{},", 
+            Local::now().format("%Y-%m-%dT%H:%M:%S")
+            );
+        self.metadata.worklog.push(new_entry);
+    }
+
+    pub fn stop(&mut self) {
+        // TODO: check for non started worklog
+        let mut last_entry = self.metadata.worklog.pop().unwrap();
+        last_entry = format!(
+            "{}{}",
+            last_entry,
+            &mut Local::now().format("%Y-%m-%dT%H:%M:%S")
+            );
+        self.metadata.worklog.push(last_entry);
     }
 }
 

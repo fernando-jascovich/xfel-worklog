@@ -1,8 +1,9 @@
 pub mod model;
 pub mod query;
 
+use std::fs::OpenOptions;
 use log::{warn, info};
-use model::DiaryDoc;
+use model::{DiaryDoc,Metadata};
 use serde::{Serialize, Deserialize};
 use std::fs::File;
 use std::fs;
@@ -26,7 +27,9 @@ pub fn load_diary() -> Vec<DiaryDoc> {
     let iter = WalkDir::new(conf().root) 
         .into_iter()
         .filter_map(Result::ok)
-        .filter(|e| !e.file_type().is_dir());
+        .filter(|e| !e.file_type().is_dir())
+        .filter(|e| !e.path().to_str().unwrap().contains(".git"));
+    
     for entry in iter {
         let path = String::from(entry.path().to_str().unwrap());
         let md = fs::read_to_string(&path).unwrap();
@@ -50,52 +53,53 @@ fn replace_frontmatter(content: &str, new_fm: &str) -> String {
     if content.starts_with("---") {
         if let Some(end) = content[3..].find("---") {
             let fm_end = end + 6; // 3 for opening and 3 for closure
-            return format!("---\n{}\n---\n{}", new_fm, &content[fm_end..]);
+            return format!("---\n{}\n---{}", new_fm, &content[fm_end..]);
         } else {
             warn!("Unterminatted frontmatter detected");
         }
     } else {
         info!("No frontmatter detected");
     }
-    return format!("---\n{}\n---\n{}", new_fm, content)
+    return format!("---\n{}\n---{}", new_fm, content)
 }
 
 pub fn update_entry(doc: DiaryDoc) {
     info!("Updating: {}", doc.path);
-    let mut file = File::open(doc.path).unwrap();
+    let mut file_r = File::open(&doc.path).unwrap();
     let mut contents = String::new();
-    file.read_to_string(&mut contents).unwrap();
-    let new_contents = replace_frontmatter(&contents, "bablavbabsbbbbbbbb");
-    info!("New: {}", new_contents);
+    file_r.read_to_string(&mut contents).unwrap();
+    let yaml = serde_yaml::to_string(&doc.metadata).unwrap();
+    let new_contents = replace_frontmatter(&contents, &yaml);
+
+    let mut file_w = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open(&doc.path)
+        .unwrap();
+    file_w.write_all(new_contents.as_bytes()).unwrap();
 }
 
 pub fn create_entry(ticket: JiraTicket, base_path: Option<&str>) {
     let key_parts: Vec<&str> = ticket.key.split("-").collect();
-    let mut tags = format!("'{}', '{}'", key_parts[0], ticket.key);
+    let mut tags = vec!(key_parts[0].to_string(), ticket.key.to_string());
     let mut dir = key_parts[0].to_string();
-
     if let Some(base) = base_path {
-        tags += format!(", '{}'", base).as_str();
+        tags.push(base.to_string());
         dir = format!("{}/{}", base, key_parts[0]);
     } 
-
-    let mut file = File::create(
-        format!("{}/{}/{}.md", conf().root, dir, ticket.key)
-    ).unwrap();
+    let metadata = Metadata {
+        author: Some(ticket.fields.creator.display_name),
+        date: None,
+        tags: tags,
+        estimate: None,
+        worklog: vec!()
+    };
+    let path = format!("{}/{}/{}.md", conf().root, dir, ticket.key);
+    info!("Writing entry into {}", path);
+    let mut file = File::create(path).unwrap();
     let file_data = format!(
-        r#"---
-author: '{}'
-date: ''
-tags: [{}]
-estimate: 
-worklog:
----
-# {}
-
-{}
-"#,
-        ticket.fields.creator.display_name, 
-        tags,
+        "---\n{}---\n# {}\n\n{}",
+        serde_yaml::to_string(&metadata).unwrap(),
         ticket.fields.summary, 
         ticket.fields.description.unwrap_or("".to_string())
     );
