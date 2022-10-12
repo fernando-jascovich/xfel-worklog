@@ -7,6 +7,7 @@ use chrono::NaiveDate;
 use chrono::offset::Local;
 use super::data;
 use super::jira;
+use log::info;
 
 fn default_start_date() -> &'static str {
     let today = Local::today().format("%Y-%m-%d");
@@ -158,7 +159,9 @@ fn fetch(key: &str, path: &Option<String>) {
         None
     }; 
     data::create_entry(ticket, p);
-    table::print(data::query::by_path(key));
+    let query_results = data::query::by_path(key);
+    let doc = query_results.first().unwrap();
+    info!("Created {}", doc.path);
 }
 
 pub fn main() {
