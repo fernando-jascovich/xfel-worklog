@@ -125,6 +125,12 @@ fn action(path: &Option<String>, kind: &ActionKind) {
         data::query::by_path(&stdin_path().unwrap())
     };
     let mut doc = results.first().unwrap().clone();
+
+    for mut active_doc in data::query::active() {
+        info!("Stopping active doc: {}", active_doc.path);
+        active_doc.stop();
+    }
+
     match kind {
         ActionKind::Start => {
             if doc.is_active() {
@@ -146,10 +152,11 @@ fn action(path: &Option<String>, kind: &ActionKind) {
 }
 
 fn browse(active: &bool) {
-    let mut docs: Vec<data::model::DiaryDoc> = data::query::all();
-    if *active {
-        docs.retain(|x| x.is_active());
-    }
+    let docs = if *active {
+        data::query::active()
+    } else {
+        data::query::all()
+    };
     let paths: Vec<String> = docs
         .iter()
         .map(|x| String::from(&x.path))

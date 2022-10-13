@@ -6,6 +6,12 @@ pub fn all() -> Vec<DiaryDoc> {
     load_diary().clone()
 }
 
+pub fn active() -> Vec<DiaryDoc> {
+    let mut data = load_diary();
+    data.retain(|x| x.is_active());
+    data
+}
+
 pub fn by_tags(tags: Vec<String>) -> Vec<DiaryDoc> {
     let mut data: Vec<DiaryDoc> = load_diary();
     data.retain(|x| {
