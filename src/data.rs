@@ -18,7 +18,7 @@ struct Config {
 }
 
 fn conf() -> Config {
-    envy::prefixed("DATA_").from_env().unwrap()
+    envy::prefixed("DIARY_").from_env().unwrap()
 }
 
 

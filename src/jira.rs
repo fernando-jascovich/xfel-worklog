@@ -1,5 +1,5 @@
 use reqwest::blocking::Client;
-use std::error::Error;
+use std::{error::Error, fmt};
 use serde::{Serialize, Deserialize};
 
 #[derive(Deserialize, Debug)]
@@ -43,6 +43,17 @@ pub struct JiraAuthor {
     pub display_name: String
 }
 
+#[derive(Debug)]
+pub struct JiraError(String);
+
+impl fmt::Display for JiraError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "JiraError: {}", self.0)
+    }
+}
+
+impl Error for JiraError {}
+
 pub fn fetch(key: &str) -> Result<JiraTicket, Box<dyn Error>> {
     let conf: Config = envy::prefixed("JIRA_").from_env().unwrap();
     let response = Client::new()
@@ -50,5 +61,8 @@ pub fn fetch(key: &str) -> Result<JiraTicket, Box<dyn Error>> {
         .header("Accept", "application/json")
         .basic_auth(conf.user, Some(conf.pass))
         .send()?;
+    if !response.status().is_success() {
+        return Err(Box::new(JiraError(response.text()?)));
+    }
     Ok(response.json().unwrap())
 }

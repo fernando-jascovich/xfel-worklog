@@ -7,7 +7,7 @@ use chrono::NaiveDate;
 use chrono::offset::Local;
 use super::data;
 use super::jira;
-use log::info;
+use log::{info, error};
 
 fn default_start_date() -> &'static str {
     let today = Local::today().format("%Y-%m-%d");
@@ -16,7 +16,7 @@ fn default_start_date() -> &'static str {
     )
 }
 
-fn default_path() -> Option<String> {
+fn stdin_path() -> Option<String> {
     if atty::is(Stream::Stdin) {
         return None;
     }
@@ -108,7 +108,7 @@ fn query(
         }
     } else if let Some(p) = path {
         data::query::by_path(&p)
-    } else if let Some(p) = default_path() {
+    } else if let Some(p) = stdin_path() {
         data::query::by_path(&p)
     } else if let Some(st) = start_date {
         data::query::by_date(&st, &end_date)
@@ -122,15 +122,23 @@ fn action(path: &Option<String>, kind: &ActionKind) {
     let results = if let Some(p) = path  {
         data::query::by_path(p)
     } else {
-        data::query::by_path(&default_path().unwrap())
+        data::query::by_path(&stdin_path().unwrap())
     };
     let mut doc = results.first().unwrap().clone();
     match kind {
         ActionKind::Start => {
+            if doc.is_active() {
+                error!("Requested doc is already active");
+                return;
+            }
             doc.start();
             data::update_entry(doc);
         }
         ActionKind::Stop => {
+            if !doc.is_active() {
+                error!("Requested doc is not active");
+                return;
+            }
             doc.stop();
             data::update_entry(doc);
         }
@@ -152,16 +160,21 @@ fn browse(active: &bool) {
 }
 
 fn fetch(key: &str, path: &Option<String>) {
-    let ticket = jira::fetch(key).unwrap();
-    let p = if let Some(path_str) = path {
-        Some(path_str.as_str())
-    } else {
-        None
-    }; 
-    data::create_entry(ticket, p);
-    let query_results = data::query::by_path(key);
-    let doc = query_results.first().unwrap();
-    info!("Created {}", doc.path);
+    let result = jira::fetch(key);
+    match result {
+        Ok(ticket) => {
+            let p = if let Some(path_str) = path {
+                Some(path_str.as_str())
+            } else {
+                None
+            }; 
+            data::create_entry(ticket, p);
+            let query_results = data::query::by_path(key);
+            let doc = query_results.first().unwrap();
+            info!("Created {}", doc.path);
+        }
+        Err(e) => error!("{}", e), 
+    }
 }
 
 pub fn main() {
