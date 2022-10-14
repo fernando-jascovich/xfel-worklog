@@ -82,16 +82,14 @@ pub enum Commands {
         /// Optional path into DATA_ROOT
         #[arg(short, long)]
         path: Option<String>
-    },
-
-    /// Sync element's worklog with jira
-    SyncWorklog {}
+    }
 }
 
 #[derive(Subcommand, Debug)]
 pub enum ActionKind {
     Start,
-    Stop
+    Stop,
+    SyncWorklog
 }
 
 fn query(
@@ -118,6 +116,14 @@ fn query(
     table::print(results);
 }
 
+fn stop_active_docs() {
+    for mut active_doc in data::query::active() {
+        info!("Stopping active doc: {}", active_doc.path);
+        active_doc.stop();
+        data::update_entry(active_doc);
+    }
+}
+
 fn action(path: &Option<String>, kind: &ActionKind) {
     let results = if let Some(p) = path  {
         data::query::by_path(p)
@@ -126,17 +132,13 @@ fn action(path: &Option<String>, kind: &ActionKind) {
     };
     let mut doc = results.first().unwrap().clone();
 
-    for mut active_doc in data::query::active() {
-        info!("Stopping active doc: {}", active_doc.path);
-        active_doc.stop();
-    }
-
     match kind {
         ActionKind::Start => {
             if doc.is_active() {
                 error!("Requested doc is already active");
                 return;
             }
+            stop_active_docs();
             doc.start();
             data::update_entry(doc);
         }
@@ -145,8 +147,12 @@ fn action(path: &Option<String>, kind: &ActionKind) {
                 error!("Requested doc is not active");
                 return;
             }
+            stop_active_docs();
             doc.stop();
             data::update_entry(doc);
+        }
+        ActionKind::SyncWorklog => {
+            doc.worklog_sync();
         }
     };
 }
@@ -192,7 +198,6 @@ pub fn main() {
         }
         Commands::Action { path, kind } => action(path, kind),
         Commands::Browse { active } => browse(active),
-        Commands::Fetch { key, path } => fetch(key, path),
-        Commands::SyncWorklog { } => todo!()
+        Commands::Fetch { key, path } => fetch(key, path)
     }
 }

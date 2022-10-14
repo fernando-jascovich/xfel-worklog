@@ -1,5 +1,6 @@
+use chrono::{NaiveDateTime, Duration};
 use reqwest::blocking::Client;
-use std::{error::Error, fmt};
+use std::{error::Error, fmt, ops::Range};
 use serde::{Serialize, Deserialize};
 
 #[derive(Deserialize, Debug)]
@@ -65,4 +66,9 @@ pub fn fetch(key: &str) -> Result<JiraTicket, Box<dyn Error>> {
         return Err(Box::new(JiraError(response.text()?)));
     }
     Ok(response.json().unwrap())
+}
+
+pub fn sync_worklog(worklog: Range<NaiveDateTime>) {
+    let duration: Duration = worklog.start - worklog.end;
+
 }

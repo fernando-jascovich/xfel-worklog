@@ -79,11 +79,10 @@ impl DiaryDoc {
         let fmt = "%Y-%m-%dT%H:%M:%S";
         let st = NaiveDateTime::parse_from_str(entry[0], fmt)?;
         let end = NaiveDateTime::parse_from_str(entry[1], fmt)?;
-        Ok(Range { start: st, end: end })
+        Ok(Range { start: st, end })
     }
 
     pub fn start(&mut self) {
-        // TODO: check for already started worklog
         let new_entry = format!(
             "{},", 
             Local::now().format("%Y-%m-%dT%H:%M:%S")
@@ -92,7 +91,6 @@ impl DiaryDoc {
     }
 
     pub fn stop(&mut self) {
-        // TODO: check for non started worklog
         let mut last_entry = self.metadata.worklog.pop().unwrap();
         last_entry = format!(
             "{}{}",
@@ -100,6 +98,12 @@ impl DiaryDoc {
             &mut Local::now().format("%Y-%m-%dT%H:%M:%S")
             );
         self.metadata.worklog.push(last_entry);
+    }
+
+    pub fn worklog_sync(&self) {
+        for range in self.worklog_range() {
+            println!("{:?}", range);
+        }
     }
 }
 
