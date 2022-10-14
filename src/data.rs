@@ -37,7 +37,7 @@ pub fn load_diary() -> Vec<DiaryDoc> {
             Ok(doc) => {
                 output.push(DiaryDoc {
                     metadata: doc.metadata,
-                    path: path
+                    path
                 });
             }
             Err(e) => {
@@ -90,7 +90,7 @@ pub fn create_entry(ticket: JiraTicket, base_path: Option<&str>) {
     let metadata = Metadata {
         author: Some(ticket.fields.creator.display_name),
         date: None,
-        tags: tags,
+        tags,
         estimate: None,
         worklog: vec!()
     };

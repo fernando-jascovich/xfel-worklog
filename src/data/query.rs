@@ -2,6 +2,17 @@ use chrono::NaiveDate;
 use super::model::DiaryDoc;
 use super::load_diary;
 
+fn sort_by_date(data: &mut Vec<DiaryDoc>) {
+    data.sort_by_key(|x| {
+        let range = x.worklog_range();
+        if range.len() < 1 {
+            0
+        } else {
+            range[0].start.timestamp()
+        }
+    });
+}
+
 pub fn all() -> Vec<DiaryDoc> {
     load_diary().clone()
 }
@@ -56,6 +67,7 @@ fn filter_date(
         });
         doc.metadata.worklog = worklog;
     }
+    sort_by_date(&mut data);
     data
 }
 

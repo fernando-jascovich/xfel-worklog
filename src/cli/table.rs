@@ -1,6 +1,6 @@
 use chrono::Duration;
 use super::data::model::DiaryDoc;
-use tabled::{builder::Builder};
+use tabled::{builder::Builder, Style, Modify, object::Cell, Border};
 
 fn duration_to_string(duration: Duration) -> String {
     String::from(
@@ -44,6 +44,7 @@ fn fmt_total(duration: Duration) -> Vec<String> {
 
 pub fn print(results: Vec<DiaryDoc>) {
     let mut builder = Builder::default();
+    builder.set_columns(vec!("Ticket", "Log", "Duration"));
     let mut total = Duration::seconds(0);
     for x in results.iter() {
         let mut record = vec!(fname(x));
@@ -54,7 +55,14 @@ pub fn print(results: Vec<DiaryDoc>) {
         total = total + partial;
     }
     builder.add_record(fmt_total(total));
-    let table = builder.build();
+    let mut table = builder.build();
+    table.with(Style::psql());
+
+    let last_border = Border::empty()
+        .top('-')
+        .top_left_corner('+');
+    let selector = Cell(table.count_rows() - 1, table.count_columns() - 1);
+    table.with(Modify::new(selector).with(last_border));
     println!("{}", table);
 }
 
