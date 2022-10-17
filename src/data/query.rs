@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveDateTime};
 use super::model::DiaryDoc;
 use super::load_diary;
 
@@ -48,12 +48,17 @@ fn filter_date(
     end_date: &Option<NaiveDate>
 ) -> Vec<DiaryDoc> {
     let st_ts = start_date.and_hms(0, 0, 0);
+    let end_ts: Option<NaiveDateTime> = if let Some(end) = end_date {
+        Some(end.and_hms(23, 59, 59))
+    } else {
+        None
+    };
     data.retain(|x| {
         if !x.has_work_after(&st_ts) {
             return false;
         }
-        if let Some(end) = end_date {
-            return x.has_work_before(&end.and_hms(23, 59, 59));
+        if let Some(end) = end_ts {
+            return x.has_work_before(&end);
         }
         true
     });
@@ -61,12 +66,16 @@ fn filter_date(
         let mut worklog: Vec<String> = doc.metadata.worklog.to_vec();
         worklog.retain_mut(|x| {
             if let Some(range) = doc.worklog_to_date_range(x).ok() {
+                if let Some(end) = end_ts {
+                    return range.start > st_ts && range.end < end;
+                }
                 return range.start > st_ts;
             }
             false
         });
         doc.metadata.worklog = worklog;
     }
+    data.retain(|x| x.metadata.worklog.len() > 0);
     sort_by_date(&mut data);
     data
 }
