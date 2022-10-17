@@ -11,7 +11,6 @@ use std::io::prelude::*;
 use super::jira::JiraTicket;
 use walkdir::WalkDir;
 use yaml_front_matter::YamlFrontMatter;
-use super::jira;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Config {
@@ -29,7 +28,8 @@ pub fn load_diary() -> Vec<DiaryDoc> {
         .into_iter()
         .filter_map(Result::ok)
         .filter(|e| !e.file_type().is_dir())
-        .filter(|e| !e.path().to_str().unwrap().contains(".git"));
+        .filter(|e| !e.path().to_str().unwrap().contains(".git"))
+        .filter(|e| !e.path().to_str().unwrap().contains("_archive"));
     
     for entry in iter {
         let path = String::from(entry.path().to_str().unwrap());
