@@ -59,7 +59,6 @@ pub enum Commands {
         /// It will default to received stdin if any. 
         /// When stdin contains more than a line, it will consider
         /// only the first line of it.
-        #[arg(short, long)]
         path: Option<String>,
 
         #[command(subcommand)]
@@ -130,8 +129,11 @@ fn action(path: &Option<String>, kind: &ActionKind) {
     } else {
         data::query::by_path(&stdin_path().unwrap())
     };
+    if let None = results.first() {
+        error!("Path doesn't match any document");
+        return;
+    };
     let mut doc = results.first().unwrap().clone();
-
     match kind {
         ActionKind::Start => {
             if doc.is_active() {
