@@ -149,7 +149,6 @@ fn action(path: &Option<String>, kind: &ActionKind) {
                 error!("Requested doc is not active");
                 return;
             }
-            stop_active_docs();
             doc.stop();
             data::update_entry(doc);
         }
