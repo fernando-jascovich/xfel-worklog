@@ -1,13 +1,17 @@
 mod table;
+mod query;
+mod action;
+mod browse;
+mod fetch;
 
 use std::io;
 use atty::Stream;
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use chrono::NaiveDate;
 use chrono::offset::Local;
 use super::data;
 use super::jira;
-use log::{info, error};
+use log::info;
 
 fn default_start_date() -> &'static str {
     let today = Local::today().format("%Y-%m-%d");
@@ -44,6 +48,10 @@ pub enum Commands {
         /// only the first line of it.
         #[arg(short, long)]
         path: Option<String>,
+
+        /// Output only paths, similar to browse command
+        #[arg(short, long, value_enum, default_value_t = QueryOutput::Table)]
+        output: QueryOutput,
 
         /// In ISO format: '2020-01-01'
         #[arg(default_value = default_start_date())]
@@ -84,44 +92,17 @@ pub enum Commands {
     }
 }
 
+#[derive(Copy, Clone, Debug, ValueEnum)]
+pub enum QueryOutput {
+    Table,
+    Paths
+}
+
 #[derive(Subcommand, Debug)]
 pub enum ActionKind {
     Start,
     Stop,
     SyncWorklog
-}
-
-fn query(
-    tags: &Option<Vec<String>>,
-    path: &Option<String>,
-    start_date: &Option<NaiveDate>,
-    end_date: &Option<NaiveDate>
-) {
-    let received_path = if let Some(p) = path {
-        String::from(p)
-    } else if let Some(p) = stdin_path() {
-        String::from(p)
-    } else {
-        String::from("")
-    };
-    let results = if let Some(t) = tags {
-        if let Some(st) = start_date {
-            data::query::by_tags_and_date(t.clone(), &st, &end_date)
-        } else {
-            data::query::by_tags(t.clone())
-        }
-    } else if !received_path.is_empty() {
-        if let Some(st) = start_date {
-            data::query::by_path_and_date(&received_path, &st, &end_date)
-        } else {
-            data::query::by_path(&received_path)
-        }
-    } else if let Some(st) = start_date {
-        data::query::by_date(&st, &end_date)
-    } else {
-        data::query::all()
-    };
-    table::print(results);
 }
 
 fn stop_active_docs() {
@@ -132,51 +113,7 @@ fn stop_active_docs() {
     }
 }
 
-fn action(path: &Option<String>, kind: &ActionKind) {
-    let results = if let Some(p) = path  {
-        data::query::by_path(p)
-    } else {
-        data::query::by_path(&stdin_path().unwrap())
-    };
-    if let None = results.first() {
-        error!("Path doesn't match any document");
-        return;
-    };
-    let mut doc = results.first().unwrap().clone();
-    match kind {
-        ActionKind::Start => {
-            if doc.is_active() {
-                error!("Requested doc is already active");
-                return;
-            }
-            stop_active_docs();
-            doc.start();
-            data::update_entry(doc);
-        }
-        ActionKind::Stop => {
-            if !doc.is_active() {
-                error!("Requested doc is not active");
-                return;
-            }
-            doc.stop();
-            data::update_entry(doc);
-        }
-        ActionKind::SyncWorklog => {
-            info!("Syncing worklogs for {}...", doc.path);
-            if let Err(e) = jira::sync_worklogs(doc) {
-                error!("{}", e);
-            };
-            info!("Finished");
-        }
-    };
-}
-
-fn browse(active: &bool) {
-    let docs = if *active {
-        data::query::active()
-    } else {
-        data::query::all()
-    };
+fn print_paths(docs: Vec<data::model::DiaryDoc>) {
     let paths: Vec<String> = docs
         .iter()
         .map(|x| String::from(&x.path))
@@ -186,32 +123,14 @@ fn browse(active: &bool) {
     }
 }
 
-fn fetch(key: &str, path: &Option<String>) {
-    let result = jira::fetch(key);
-    match result {
-        Ok(ticket) => {
-            let p = if let Some(path_str) = path {
-                Some(path_str.as_str())
-            } else {
-                None
-            }; 
-            data::create_entry(ticket, p);
-            let query_results = data::query::by_path(key);
-            let doc = query_results.first().unwrap();
-            info!("Created {}", doc.path);
-        }
-        Err(e) => error!("{}", e), 
-    }
-}
-
 pub fn main() {
     let cli = Args::parse();
     match &cli.command {
-        Commands::Query { tags, path, start_date, end_date } => {
-            query(tags, path, start_date, end_date);
+        Commands::Query { tags, path, start_date, end_date, output } => {
+            query::run(tags, path, start_date, end_date, output);
         }
-        Commands::Action { path, kind } => action(path, kind),
-        Commands::Browse { active } => browse(active),
-        Commands::Fetch { key, path } => fetch(key, path)
+        Commands::Action { path, kind } => action::run(path, kind),
+        Commands::Browse { active } => browse::run(active),
+        Commands::Fetch { key, path } => fetch::run(key, path)
     }
 }
