@@ -4,7 +4,6 @@ use chrono::NaiveDateTime;
 use std::ops::Range;
 use std::fmt;
 use serde::{Serialize, Deserialize};
-use super::jira;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Metadata {
@@ -99,16 +98,6 @@ impl DiaryDoc {
             &mut Local::now().format("%Y-%m-%dT%H:%M:%S")
             );
         self.metadata.worklog.push(last_entry);
-    }
-
-    fn jira_key(&self) -> String {
-        self.path.rsplit_once("/").unwrap().1.to_string()
-    }
-
-    pub fn worklog_sync(&self) {
-        for range in self.worklog_range() {
-            jira::sync_worklog(self.jira_key(), range);
-        }
     }
 }
 

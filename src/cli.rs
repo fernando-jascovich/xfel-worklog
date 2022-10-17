@@ -162,7 +162,11 @@ fn action(path: &Option<String>, kind: &ActionKind) {
             data::update_entry(doc);
         }
         ActionKind::SyncWorklog => {
-            doc.worklog_sync();
+            info!("Syncing worklogs for {}...", doc.path);
+            if let Err(e) = jira::sync_worklogs(doc) {
+                error!("{}", e);
+            };
+            info!("Finished");
         }
     };
 }
