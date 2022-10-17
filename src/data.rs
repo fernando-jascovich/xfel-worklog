@@ -11,6 +11,7 @@ use std::io::prelude::*;
 use super::jira::JiraTicket;
 use walkdir::WalkDir;
 use yaml_front_matter::YamlFrontMatter;
+use super::jira;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Config {
