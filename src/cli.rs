@@ -97,16 +97,25 @@ fn query(
     start_date: &Option<NaiveDate>,
     end_date: &Option<NaiveDate>
 ) {
+    let received_path = if let Some(p) = path {
+        String::from(p)
+    } else if let Some(p) = stdin_path() {
+        String::from(p)
+    } else {
+        String::from("")
+    };
     let results = if let Some(t) = tags {
         if let Some(st) = start_date {
             data::query::by_tags_and_date(t.clone(), &st, &end_date)
         } else {
             data::query::by_tags(t.clone())
         }
-    } else if let Some(p) = path {
-        data::query::by_path(&p)
-    } else if let Some(p) = stdin_path() {
-        data::query::by_path(&p)
+    } else if !received_path.is_empty() {
+        if let Some(st) = start_date {
+            data::query::by_path_and_date(&received_path, &st, &end_date)
+        } else {
+            data::query::by_path(&received_path)
+        }
     } else if let Some(st) = start_date {
         data::query::by_date(&st, &end_date)
     } else {

@@ -93,3 +93,12 @@ pub fn by_path(path: &str) -> Vec<DiaryDoc> {
     data.retain(|x| x.path.contains(path));
     data
 }
+
+pub fn by_path_and_date(
+    path: &str, 
+    start_date: &NaiveDate, 
+    end_date: &Option<NaiveDate>
+) -> Vec<DiaryDoc> {
+    let data: Vec<DiaryDoc> = by_path(path);
+    filter_date(data, start_date, end_date)
+}

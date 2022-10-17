@@ -50,6 +50,7 @@ pub fn print(results: Vec<DiaryDoc>) {
         let mut record = vec!(fname(x));
         let (rows, partial) = ranges(x);
         record.push(rows);
+        record.push("".to_string());
         builder.add_record(record);
         builder.add_record(fmt_total(partial));
         total = total + partial;
