@@ -1,18 +1,9 @@
 use super::{data, ActionKind, stop_active_docs, stdin_path};
+use super::data::model::DiaryDoc;
 use super::jira;
 use log::{info, error};
 
-pub fn run(path: &Option<String>, kind: &ActionKind) {
-    let results = if let Some(p) = path  {
-        data::query::by_path(p)
-    } else {
-        data::query::by_path(&stdin_path().unwrap())
-    };
-    if let None = results.first() {
-        error!("Path doesn't match any document");
-        return;
-    };
-    let mut doc = results.first().unwrap().clone();
+fn do_action(kind: &ActionKind, mut doc: DiaryDoc) {
     match kind {
         ActionKind::Start => {
             if doc.is_active() {
@@ -39,4 +30,22 @@ pub fn run(path: &Option<String>, kind: &ActionKind) {
             info!("Finished");
         }
     };
+}
+
+pub fn run(path: &Option<String>, kind: &ActionKind) {
+    let results = if let Some(p) = path  {
+        data::query::by_path(p)
+    } else {
+        data::query::by_path(&stdin_path().unwrap())
+    };
+    let matched_docs = results.len();
+
+    if matched_docs < 1 {
+        error!("Path doesn't match any document");
+        return;
+    }
+    info!("Query matched {} docs", matched_docs);
+    for doc in results {
+        do_action(kind, doc);
+    }
 }
