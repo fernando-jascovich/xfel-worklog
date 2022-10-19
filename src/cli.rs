@@ -94,8 +94,16 @@ pub enum Commands {
 
 #[derive(Copy, Clone, Debug, ValueEnum)]
 pub enum QueryOutput {
+    /// It will output a table with files and time spent.
     Table,
-    Paths
+
+    /// It will output a list of matched files.
+    Paths,
+
+    /// It will output a table only with tags and time spent.
+    /// Note that tags that looks like Jira tickets (EXAMPLE-123)
+    /// will be filtered out from output (not from time sum)
+    Tags
 }
 
 #[derive(Subcommand, Debug)]

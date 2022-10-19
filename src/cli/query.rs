@@ -34,7 +34,8 @@ pub fn run(
     };
     match output {
         QueryOutput::Table => table::print(results),
-        QueryOutput::Paths => print_paths(results)
+        QueryOutput::Paths => print_paths(results),
+        QueryOutput::Tags => table::print_tags(results)
     };
 }
 
