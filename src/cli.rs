@@ -3,6 +3,7 @@ mod query;
 mod action;
 mod browse;
 mod fetch;
+mod date_parse;
 
 use std::io;
 use atty::Stream;
@@ -54,7 +55,10 @@ pub enum Commands {
         output: QueryOutput,
 
         /// In ISO format: '2020-01-01'
-        #[arg(default_value = default_start_date())]
+        #[arg(
+            default_value = default_start_date(), 
+            value_parser = date_parse::input
+        )]
         start_date: Option<NaiveDate>,
 
         /// In ISO format: '2020-01-01'
