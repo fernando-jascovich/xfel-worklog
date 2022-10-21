@@ -62,7 +62,7 @@ pub enum Commands {
         start_date: Option<NaiveDate>,
 
         /// In ISO format: '2020-01-01'
-        end_date: Option<NaiveDate>
+        end_date: Option<String>
     },
 
     /// Perform an action on elements
@@ -139,7 +139,12 @@ pub fn main() {
     let cli = Args::parse();
     match &cli.command {
         Commands::Query { tags, path, start_date, end_date, output } => {
-            query::run(tags, path, start_date, end_date, output);
+            let end_date_parsed: Option<NaiveDate> = if let Some(x) = end_date {
+                date_parse::input(x).ok()
+            } else {
+                None
+            };
+            query::run(tags, path, start_date, &end_date_parsed, output);
         }
         Commands::Action { path, kind } => action::run(path, kind),
         Commands::Browse { active } => browse::run(active),
