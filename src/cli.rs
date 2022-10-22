@@ -67,10 +67,8 @@ pub enum Commands {
 
     /// Perform an action on elements
     Action {
-        /// Path on which operate. It should point to a single element.
+        /// Path on which operate. 
         /// It will default to received stdin if any. 
-        /// When stdin contains more than a line, it will consider
-        /// only the first line of it.
         path: Option<String>,
 
         #[command(subcommand)]
@@ -112,8 +110,13 @@ pub enum QueryOutput {
 
 #[derive(Subcommand, Debug)]
 pub enum ActionKind {
+    /// It starts worklog, this is, it inserts a new start timestamp for a document.
     Start,
+
+    /// It stops worklog, this is, it inserts a new stop timestamp for a document.
     Stop,
+
+    /// It syncs worklogs entries with Jira.
     SyncWorklog
 }
 
