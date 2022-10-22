@@ -92,17 +92,23 @@ pub fn create_entry(ticket: JiraTicket, base_path: Option<&str>) {
         author: Some(ticket.fields.creator.display_name),
         date: None,
         tags,
-        estimate: None,
+        estimate: ticket.fields.timetracking.original_estimate,
         worklog: vec!()
     };
     let path = format!("{}/{}/{}.md", conf().root, dir, ticket.key);
     info!("Writing entry into {}", path);
     let mut file = File::create(path).unwrap();
+    let comments: String = ticket.fields.comment.comments
+        .iter()
+        .map(|x| format!("## {}\n{}", x.author.display_name, x.body))
+        .collect::<Vec<String>>()
+        .join("\n\n");
     let file_data = format!(
-        "---\n{}---\n# {}\n\n{}",
+        "---\n{}---\n# {}\n\n{}\n\n# Comments\n\n{}",
         serde_yaml::to_string(&metadata).unwrap(),
         ticket.fields.summary, 
-        ticket.fields.description.unwrap_or("".to_string())
+        ticket.fields.description.unwrap_or("".to_string()),
+        comments
     );
     file.write_all(file_data.as_bytes()).unwrap();
 }

@@ -51,7 +51,8 @@ pub struct JiraTicketFields {
     pub description: Option<String>,
     pub summary: String,
     pub comment: JiraCommentHolder,
-    pub creator: JiraAuthor
+    pub creator: JiraAuthor,
+    pub timetracking: JiraTimetracking
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -69,6 +70,12 @@ pub struct JiraComment {
 pub struct JiraAuthor {
     #[serde(rename = "displayName")]
     pub display_name: String
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct JiraTimetracking {
+    #[serde(rename = "originalEstimate")]
+    pub original_estimate: Option<String>
 }
 
 #[derive(Debug)]
