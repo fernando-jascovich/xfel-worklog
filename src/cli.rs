@@ -54,14 +54,14 @@ pub enum Commands {
         #[arg(short, long, value_enum, default_value_t = QueryOutput::Table)]
         output: QueryOutput,
 
-        /// In ISO format: '2020-01-01'
+        /// In ISO format: '2020-01-01' or one of the following: today, yesterday, month (current month), biweekly (current month's half), friday (last friday)
         #[arg(
             default_value = default_start_date(), 
             value_parser = date_parse::input
         )]
         start_date: Option<NaiveDate>,
 
-        /// In ISO format: '2020-01-01'
+        /// In ISO format: '2020-01-01' or one of the following: today, yesterday, month (current month), biweekly (current month's half), friday (last friday)
         end_date: Option<String>
     },
 

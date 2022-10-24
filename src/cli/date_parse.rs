@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, Duration, Datelike};
+use chrono::{NaiveDate, Duration, Datelike, Weekday};
 use chrono::offset::Local;
 
 fn today() -> NaiveDate {
@@ -29,6 +29,15 @@ pub fn input(s: &str) -> Result<NaiveDate, String> {
                 1
             };
             Ok(days_from_today(today - target))
+        }
+        "friday" => {
+            let mut cursor = today();
+            let mut last_friday_gap = 0;
+            while cursor.weekday() != Weekday::Fri {
+                cursor = cursor.checked_sub_signed(Duration::days(1)).unwrap();
+                last_friday_gap += 1;
+            };
+            Ok(days_from_today(last_friday_gap))
         }
         _  => Err(format!("Can't format input as date: {}", s))
     }
