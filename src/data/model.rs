@@ -1,5 +1,5 @@
 use chrono::Local;
-use std::io::{Error, ErrorKind};
+use std::{io::{Error, ErrorKind}, cmp::Ordering};
 use chrono::NaiveDateTime;
 use std::ops::Range;
 use std::fmt;
@@ -53,10 +53,20 @@ impl DiaryDoc {
     }
 
     pub fn worklog_range(&self) -> Vec<Range<NaiveDateTime>> {
-        self.metadata.worklog
+        let mut out = self.metadata.worklog
             .iter()
             .filter_map(|x| self.worklog_to_date_range(x).ok())
-            .collect()
+            .collect::<Vec<Range<NaiveDateTime>>>();
+
+        out.sort_by(|a, b| if a.start > b.start {
+            Ordering::Greater
+        } else if a.start < b.start {
+            Ordering::Less
+        } else {
+            Ordering::Equal
+        });
+
+        out
     }
 
     fn worklog_entry<'a >(&self, worklog: &'a str) -> Vec<&'a str> {

@@ -33,7 +33,7 @@ pub fn run(
         data::query::all()
     };
     match output {
-        QueryOutput::Table => table::print(results),
+        QueryOutput::Table => table::print_with_dates(results),
         QueryOutput::Paths => print_paths(results),
         QueryOutput::Tags => table::print_tags(results)
     };
