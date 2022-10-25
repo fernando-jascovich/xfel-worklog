@@ -22,25 +22,36 @@ impl PrintWithDatesData {
             total: Duration::seconds(0)
         };
         let zero = Duration::seconds(0);
+        let mut worklogs: HashMap<NaiveDateTime, (Duration, Vec<String>)> = HashMap::new();
+
         for doc in results.iter() {
             for range in doc.worklog_range().iter() {
-                let mut empty = vec!();
-                let key = range.start.date();
-                let value: &mut Vec<Vec<String>> = inst.dates
-                    .get_mut(&key)
-                    .unwrap_or(&mut empty);
-
-                let (partial, row) = PrintWithDatesData::doc_row(fname(doc), range);
-                value.push(row);
-
-                let final_value = value.to_vec();
-                inst.dates.insert(key.clone(), final_value);
-
-                let this_date_duration = inst.durations.get(&key).unwrap_or(&zero);
-                inst.durations.insert(key, *this_date_duration + partial);
-                inst.total  = inst.total + partial;
+                worklogs.insert(
+                    range.start, 
+                    PrintWithDatesData::doc_row(fname(doc), range)
+                );
             }
         }
+
+        let mut sorted_keys: Vec<&NaiveDateTime> = worklogs.keys().collect();
+        sorted_keys.sort();
+        for k in sorted_keys {
+            let mut empty = vec!();
+            let key = k.date();
+            let value: &mut Vec<Vec<String>> = inst.dates
+                .get_mut(&key)
+                .unwrap_or(&mut empty);
+            let (partial, row) = worklogs.get(k).unwrap();
+            value.push(row.to_vec());
+
+            let final_value = value.to_vec();
+            inst.dates.insert(key.clone(), final_value);
+
+            let this_date_duration = inst.durations.get(&key).unwrap_or(&zero);
+            inst.durations.insert(key, *this_date_duration + *partial);
+            inst.total  = inst.total + *partial;
+        }
+
         inst
     }
 
