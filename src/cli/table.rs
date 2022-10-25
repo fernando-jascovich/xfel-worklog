@@ -1,10 +1,12 @@
 use std::{collections::HashMap, ops::Range};
-
 use lazy_static::lazy_static;
 use regex::Regex;
 use chrono::{Duration, NaiveDate, NaiveDateTime};
+use tabled::locator::ByColumnName;
 use super::data::model::DiaryDoc;
-use tabled::{builder::Builder, Style, Modify, object::Cell, Border};
+use tabled::object::Rows;
+use tabled::builder::Builder;
+use tabled::{Style, Modify, Border, Panel, Alignment};
 
 struct PrintWithDatesData {
     dates: HashMap<NaiveDate, Vec<Vec<String>>>,
@@ -90,23 +92,41 @@ fn ranges(doc: &DiaryDoc) -> (String, Duration) {
     (rows, duration_acc)
 }
 
-fn fmt_total(duration: Duration) -> Vec<String> {
-    vec!(
-        "".to_string(), 
-        "".to_string(), 
-        duration_to_string(&duration)
-    )
-}
-
-fn do_print(builder: Builder) {
+fn do_print(builder: Builder, total: &Duration) {
     let mut table = builder.build();
     table.with(Style::psql());
 
-    let last_border = Border::empty()
-        .top('-')
-        .top_left_corner('+');
-    let selector = Cell(table.count_rows() - 1, table.count_columns() - 1);
-    table.with(Modify::new(selector).with(last_border));
+    let rows = table.count_rows();
+    let cols = table.count_columns();
+    let records = table.get_records().clone();
+
+    let mut cursor = 0;
+    while cursor < rows {
+        let coord = (cursor, cols - 1);
+        let cell = &records[coord];
+        if !cell.is_empty() {
+            let border = Border::empty().bottom('-');
+            let selector = Rows::single(coord.0);
+            table.with(Modify::new(selector).with(border));
+        }
+        cursor += 1;
+    }
+    table.with(Modify::new(Rows::last()).with(Border::empty().bottom('=')));
+
+    for col_name in ["Duration", "Start", "End", "Total"] {
+        table.with(
+            Modify::new(ByColumnName::new(col_name)).with(Alignment::right())
+        );
+    }
+    table.with(
+        Modify::new(Rows::first())
+            .with(Alignment::center())
+            .with(Border::empty().bottom('=').top('='))
+    );
+    let footer_msg = format!("Total: {}", duration_to_string(&total));
+    table.with(Panel::footer(footer_msg));
+    table.with(Modify::new(Rows::last()).with(Alignment::right()));
+
     println!("{}", table);
 }
 
@@ -150,28 +170,7 @@ pub fn print_with_dates(results: Vec<DiaryDoc>) {
     let data = PrintWithDatesData::new(results);
     print_with_dates_add_records(&mut builder, &data.dates, &data.durations);
 
-    let mut last = vec![String::from(""); 6];
-    last[5] = duration_to_string(&data.total);
-    builder.add_record(last);
-
-    do_print(builder);
-}
-
-pub fn print(results: Vec<DiaryDoc>) {
-    let mut builder = Builder::default();
-    builder.set_columns(vec!("Ticket", "Log", "Duration"));
-    let mut total = Duration::seconds(0);
-    for x in results.iter() {
-        let mut record = vec!(fname(x));
-        let (rows, partial) = ranges(x);
-        record.push(rows);
-        record.push("".to_string());
-        builder.add_record(record);
-        builder.add_record(fmt_total(partial));
-        total = total + partial;
-    }
-    builder.add_record(fmt_total(total));
-    do_print(builder);
+    do_print(builder, &data.total);
 }
 
 pub fn print_tags(results: Vec<DiaryDoc>) {
@@ -196,6 +195,5 @@ pub fn print_tags(results: Vec<DiaryDoc>) {
         .for_each(|x| {
             builder.add_record(x);
         });
-    builder.add_record(fmt_total(total));
-    do_print(builder);
+    do_print(builder, &total);
 }
