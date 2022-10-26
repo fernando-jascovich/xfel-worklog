@@ -1,6 +1,6 @@
 use chrono::{DateTime, NaiveDateTime, Duration, offset::Local};
 use reqwest::blocking::Client;
-use std::{error::Error, fmt};
+use std::{error::Error, fmt, cmp::max};
 use serde::{Serialize, Deserialize};
 use super::data::model::DiaryDoc;
 use log::warn;
@@ -151,17 +151,20 @@ fn sync_worklog(
     let body = WorklogBody {
         comment: String::from(""),
         started: started.to_string(),
-        time_spent_seconds: duration.num_seconds(),
+        // timeSpentSeconds cannot be less than 60s
+        time_spent_seconds: max(duration.num_seconds(), 60),
     };
     let response = Client::new()
         .post(format!("{}{}", conf.host, worklog_uri(key)))
         .header("Accept", "application/json")
+        .header("Content-Type", "application/json")
         .basic_auth(conf.user, Some(conf.pass))
         .json(&body)
         .query(&vars)
         .send()?;
     if !response.status().is_success() {
-        return Err(Box::new(JiraError(response.text()?)));
+        let msg = format!("{}\n{}", response.status(), response.text()?);
+        return Err(Box::new(JiraError(msg)));
     }
     Ok(())
 }

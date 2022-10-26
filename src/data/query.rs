@@ -88,6 +88,12 @@ pub fn by_date(
     filter_date(data, start_date, end_date)
 }
 
+pub fn by_path_multiple(paths: &Vec<String>) -> Vec<DiaryDoc> {
+    let mut data: Vec<DiaryDoc> = load_diary();
+    data.retain(|x| paths.contains(&x.path));
+    data
+}
+
 pub fn by_path(path: &str) -> Vec<DiaryDoc> {
     let mut data: Vec<DiaryDoc> = load_diary();
     data.retain(|x| x.path.contains(path));

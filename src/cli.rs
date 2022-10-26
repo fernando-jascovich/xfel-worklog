@@ -28,6 +28,15 @@ fn stdin_path() -> Option<String> {
     io::stdin().lines().nth(0).unwrap().ok()
 }
 
+fn stdin_path_multiple() -> Option<Vec<String>> {
+    if atty::is(Stream::Stdin) {
+        return None;
+    }
+    Some(
+        io::stdin().lines().map(|x| x.unwrap()).collect()
+    )
+}
+
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {

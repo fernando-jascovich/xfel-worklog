@@ -1,4 +1,4 @@
-use super::{data, ActionKind, stop_active_docs, stdin_path};
+use super::{data, ActionKind, stop_active_docs, stdin_path_multiple};
 use super::data::model::DiaryDoc;
 use super::jira;
 use log::{info, error};
@@ -36,7 +36,7 @@ pub fn run(path: &Option<String>, kind: &ActionKind) {
     let results = if let Some(p) = path  {
         data::query::by_path(p)
     } else {
-        data::query::by_path(&stdin_path().unwrap())
+        data::query::by_path_multiple(&stdin_path_multiple().unwrap())
     };
     let matched_docs = results.len();
 
