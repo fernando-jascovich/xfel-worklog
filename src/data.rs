@@ -15,7 +15,7 @@ use yaml_front_matter::YamlFrontMatter;
 #[derive(Serialize, Deserialize, Debug)]
 struct Config {
     root: String,
-    include_archive: bool
+    include_archive: Option<bool>
 }
 
 fn conf() -> Config {
@@ -32,7 +32,8 @@ pub fn load_diary() -> Vec<DiaryDoc> {
         .filter(|e| !e.path().to_str().unwrap().contains(".git"))
         .collect();
 
-    if !conf().include_archive {
+    let include_archive = conf().include_archive.unwrap_or(false);
+    if include_archive {
         iter = iter
             .into_iter()
             .filter(|e| !e.path().to_str().unwrap().contains("_archive"))
