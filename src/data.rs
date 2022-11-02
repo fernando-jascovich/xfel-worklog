@@ -9,12 +9,13 @@ use std::fs::File;
 use std::fs;
 use std::io::prelude::*;
 use super::jira::JiraTicket;
-use walkdir::WalkDir;
+use walkdir::{WalkDir, DirEntry};
 use yaml_front_matter::YamlFrontMatter;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Config {
-    root: String
+    root: String,
+    include_archive: bool
 }
 
 fn conf() -> Config {
@@ -24,12 +25,19 @@ fn conf() -> Config {
 
 pub fn load_diary() -> Vec<DiaryDoc> {
     let mut output: Vec<DiaryDoc> = Vec::new();
-    let iter = WalkDir::new(conf().root) 
+    let mut iter: Vec<DirEntry> = WalkDir::new(conf().root) 
         .into_iter()
         .filter_map(Result::ok)
         .filter(|e| !e.file_type().is_dir())
         .filter(|e| !e.path().to_str().unwrap().contains(".git"))
-        .filter(|e| !e.path().to_str().unwrap().contains("_archive"));
+        .collect();
+
+    if !conf().include_archive {
+        iter = iter
+            .into_iter()
+            .filter(|e| !e.path().to_str().unwrap().contains("_archive"))
+            .collect();
+    }
     
     for entry in iter {
         let path = String::from(entry.path().to_str().unwrap());

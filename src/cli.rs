@@ -47,6 +47,11 @@ pub struct Args {
 #[derive(Subcommand, Debug)]
 pub enum Commands {
     /// Query for elements
+    /// Two env variables are involved here:
+    /// 
+    /// - DIARY_ROOT: defines root directory of diary files
+    ///
+    /// - DIARY_INCLUDE_ARCHIVE: include (or not, this is default) files under DIARY_ROOT/_archive directory
     Query {
         /// Filter by tags: 'my tag'
         #[arg(short, long)]

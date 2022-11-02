@@ -55,6 +55,11 @@ A query can contain:
 
 There are _certain_ natural language queries supported for start and end date positional arguments. Check [here](./src/cli/date_parse.rs) on `#input` for a list of supported queries.
 
+Two env variables are involved here:
+
+- `DIARY_ROOT`: defines root directory of diary files
+- `DIARY_INCLUDE_ARCHIVE`: include (or not, this is default) files under `$DIARY_ROOT/_archive` directory
+
 ## Action
 
 The following actions are supported:
