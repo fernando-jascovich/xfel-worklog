@@ -33,7 +33,7 @@ pub fn load_diary() -> Vec<DiaryDoc> {
         .collect();
 
     let include_archive = conf().include_archive.unwrap_or(false);
-    if include_archive {
+    if !include_archive {
         iter = iter
             .into_iter()
             .filter(|e| !e.path().to_str().unwrap().contains("_archive"))
