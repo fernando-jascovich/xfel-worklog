@@ -1,8 +1,8 @@
 pub mod model;
 pub mod query;
 
-use std::fs::OpenOptions;
-use log::{warn, info};
+use std::{fs::OpenOptions, process};
+use log::{warn, info, error};
 use model::{DiaryDoc,Metadata};
 use serde::{Serialize, Deserialize};
 use std::fs::File;
@@ -97,6 +97,12 @@ pub fn create_entry(ticket: JiraTicket, base_path: Option<&str>) {
         tags.push(base.to_string());
         dir = format!("{}/{}", base, key_parts[0]);
     } 
+    let path = format!("{}/{}/{}.md", conf().root, dir, ticket.key);
+    info!("Writing entry into {}", path);
+    if File::open(&path).is_ok() {
+        error!("{} already exists.", &path);
+        process::exit(1);
+    }
     let metadata = Metadata {
         author: Some(ticket.fields.creator.display_name),
         date: None,
@@ -104,8 +110,6 @@ pub fn create_entry(ticket: JiraTicket, base_path: Option<&str>) {
         estimate: ticket.fields.timetracking.original_estimate,
         worklog: vec!()
     };
-    let path = format!("{}/{}/{}.md", conf().root, dir, ticket.key);
-    info!("Writing entry into {}", path);
     let mut file = File::create(path).unwrap();
     let comments: String = ticket.fields.comment.comments
         .iter()
