@@ -25,6 +25,10 @@ impl DiaryDoc {
         entry.len() > 1 && !entry[1].is_empty()
     }
 
+    pub fn is_archive(&self) -> bool {
+        self.path.contains("_archive")
+    }
+
     pub fn is_active(&self) -> bool {
         for x in &self.metadata.worklog {
             if !self.is_worklog_entry_complete(&self.worklog_entry(&x)) {

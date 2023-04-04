@@ -29,6 +29,13 @@ fn do_action(kind: &ActionKind, mut doc: DiaryDoc) {
             };
             info!("Finished");
         }
+        ActionKind::Archive => {
+            if doc.is_archive() {
+                error!("Selected doc is already archived");
+                return;
+            }
+            data::archive_entry(doc);
+        }
     };
 }
 

@@ -1,7 +1,7 @@
 pub mod model;
 pub mod query;
 
-use std::{fs::OpenOptions, process};
+use std::{fs::OpenOptions, process, path::Path};
 use log::{warn, info, error};
 use model::{DiaryDoc,Metadata};
 use serde::{Serialize, Deserialize};
@@ -22,6 +22,9 @@ fn conf() -> Config {
     envy::prefixed("DIARY_").from_env().unwrap()
 }
 
+fn is_archive(x: &DirEntry) -> bool {
+    x.path().to_str().unwrap().contains("_archive")
+}
 
 pub fn load_diary() -> Vec<DiaryDoc> {
     let mut output: Vec<DiaryDoc> = Vec::new();
@@ -36,7 +39,7 @@ pub fn load_diary() -> Vec<DiaryDoc> {
     if !include_archive {
         iter = iter
             .into_iter()
-            .filter(|e| !e.path().to_str().unwrap().contains("_archive"))
+            .filter(|e| !is_archive(e))
             .collect();
     }
     
@@ -71,6 +74,22 @@ fn replace_frontmatter(content: &str, new_fm: &str) -> String {
         info!("No frontmatter detected");
     }
     return format!("---\n{}\n---{}", new_fm, content)
+}
+
+pub fn archive_entry(doc: DiaryDoc) {
+    let root = conf().root;
+    let last_part = String::from(&doc.path).split_off(root.len() + 1);
+    let target = Path::new(&root).join("_archive").join(last_part);
+    let target_str = target.to_str().unwrap();
+    let target_dir = &target.parent().unwrap();
+    info!("Target dir: {}", target_dir.to_str().unwrap());
+    match fs::create_dir_all(target_dir) {
+        Ok(_) => {
+            fs::rename(&doc.path, target_str).unwrap();
+            info!("Archived: {} -> {}", &doc.path, target_str);
+        }
+        Err(e) => error!("{}", e)
+    }
 }
 
 pub fn update_entry(doc: DiaryDoc) {

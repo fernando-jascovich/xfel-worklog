@@ -131,7 +131,10 @@ pub enum ActionKind {
     Stop,
 
     /// It syncs worklogs entries with Jira.
-    SyncWorklog
+    SyncWorklog,
+
+    /// It will put selected document into _archive directory
+    Archive
 }
 
 fn stop_active_docs() {
