@@ -45,17 +45,19 @@ pub fn load_diary() -> Vec<DiaryDoc> {
     
     for entry in iter {
         let path = String::from(entry.path().to_str().unwrap());
-        let md = fs::read_to_string(&path).unwrap();
-        match YamlFrontMatter::parse(&md) {
-            Ok(doc) => {
-                output.push(DiaryDoc {
-                    metadata: doc.metadata,
-                    path
-                });
-            }
-            Err(e) => {
-                warn!("Error with path {}", path);
-                warn!("{}", e);
+        if path.ends_with("md") {
+            let md = fs::read_to_string(&path).unwrap();
+            match YamlFrontMatter::parse(&md) {
+                Ok(doc) => {
+                    output.push(DiaryDoc {
+                        metadata: doc.metadata,
+                        path
+                    });
+                }
+                Err(e) => {
+                    warn!("Error with path {}", path);
+                    warn!("{}", e);
+                }
             }
         }
     }
