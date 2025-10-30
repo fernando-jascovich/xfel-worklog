@@ -57,6 +57,16 @@ pub fn load_diary() -> Vec<DiaryDoc> {
                 Err(e) => {
                     warn!("Error with path {}", path);
                     warn!("{}", e);
+                    output.push(DiaryDoc {
+                        metadata: Metadata {
+                            author: None,
+                            date: None, 
+                            tags: vec!(), 
+                            estimate: None, 
+                            worklog: vec!() 
+                        },
+                        path
+                    });
                 }
             }
         }
